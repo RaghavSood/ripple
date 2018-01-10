@@ -2,11 +2,12 @@ package ledger
 
 import (
 	"fmt"
-	"github.com/rubblelabs/ripple/data"
-	"github.com/rubblelabs/ripple/storage"
-	"github.com/rubblelabs/ripple/terminal"
-	"github.com/golang/glog"
 	"time"
+
+	"github.com/atticlab/ripple/data"
+	"github.com/atticlab/ripple/storage"
+	"github.com/atticlab/ripple/terminal"
+	"github.com/golang/glog"
 )
 
 type Manager struct {

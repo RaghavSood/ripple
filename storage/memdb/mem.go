@@ -6,11 +6,12 @@ import (
 	"compress/gzip"
 	"encoding/hex"
 	"fmt"
-	"github.com/rubblelabs/ripple/data"
-	"github.com/rubblelabs/ripple/storage"
 	"os"
 	"strings"
 	"sync"
+
+	"github.com/atticlab/ripple/data"
+	"github.com/atticlab/ripple/storage"
 )
 
 type MemoryDB struct {

@@ -1,8 +1,9 @@
 package ledger
 
 import (
-	"github.com/rubblelabs/ripple/data"
 	"sort"
+
+	"github.com/atticlab/ripple/data"
 )
 
 type CanonicalTxSet struct {

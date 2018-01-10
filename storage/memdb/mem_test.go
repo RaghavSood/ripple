@@ -1,8 +1,9 @@
 package memdb
 
 import (
-	"github.com/rubblelabs/ripple/data"
 	"testing"
+
+	"github.com/atticlab/ripple/data"
 )
 
 func checkErr(t *testing.T, err error) {

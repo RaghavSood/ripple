@@ -1,7 +1,7 @@
 package ledger
 
 import (
-	"github.com/rubblelabs/ripple/data"
+	"github.com/atticlab/ripple/data"
 )
 
 type Sync interface {

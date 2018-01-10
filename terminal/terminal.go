@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/atticlab/ripple/data"
+	"github.com/atticlab/ripple/websockets"
 	"github.com/fatih/color"
-	"github.com/rubblelabs/ripple/data"
-	"github.com/rubblelabs/ripple/websockets"
 )
 
 type Flag uint32

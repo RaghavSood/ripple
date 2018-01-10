@@ -2,10 +2,11 @@ package ledger
 
 import (
 	"fmt"
-	"github.com/rubblelabs/ripple/data"
-	"github.com/rubblelabs/ripple/storage"
 	"strconv"
 	"strings"
+
+	"github.com/atticlab/ripple/data"
+	"github.com/atticlab/ripple/storage"
 )
 
 type AccountState struct {
