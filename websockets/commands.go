@@ -138,6 +138,16 @@ type SubmitResult struct {
 	Tx                  interface{}            `json:"tx_json"`
 }
 
+type LedgerClosedCommand struct {
+	*Command
+	Result *LedgerClosedResult `json:"result,omitempty"`
+}
+
+type LedgerClosedResult struct {
+	LedgerHash  *data.Hash256 `json:"ledger_hash,omitempty"`
+	LedgerIndex uint32        `json:"ledger_index"`
+}
+
 type LedgerCommand struct {
 	*Command
 	LedgerIndex  interface{}   `json:"ledger_index"`

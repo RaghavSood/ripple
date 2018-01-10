@@ -290,6 +290,19 @@ func (r *Remote) StreamLedgerData(ledger interface{}) chan data.LedgerEntrySlice
 	return c
 }
 
+// Synchronously gets the last closed ledger
+func (r *Remote) ClosedLedger() (*LedgerClosedResult, error) {
+	cmd := &LedgerClosedCommand{
+		Command: newCommand("ledger_closed"),
+	}
+	r.outgoing <- cmd
+	<-cmd.Ready
+	if cmd.CommandError != nil {
+		return nil, cmd.CommandError
+	}
+	return cmd.Result, nil
+}
+
 // Synchronously gets a single ledger
 func (r *Remote) Ledger(ledger interface{}, transactions bool) (*LedgerResult, error) {
 	cmd := &LedgerCommand{
