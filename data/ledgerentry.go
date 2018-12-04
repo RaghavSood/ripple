@@ -120,12 +120,26 @@ type SignerEntry struct {
 	SignerWeight *uint16  `json:",omitempty"`
 }
 
+type SignerEntries struct {
+	SignerEntry SignerEntry `json:",omitempty"`
+}
+
+type Signer struct {
+	Signer struct {
+		Account       *Account        `json:",omitempty"`
+		SigningPubKey *PublicKey      `json:",omitempty"`
+		TxnSignature  *VariableLength `json:",omitempty"`
+	} `json:",omitempty"`
+}
+
+type Signers []Signer
+
 type SignerList struct {
 	leBase
 	Flags         *LedgerEntryFlag `json:",omitempty"`
 	OwnerNode     *NodeIndex       `json:",omitempty"`
 	SignerQuorum  *uint32          `json:",omitempty"`
-	SignerEntries []SignerEntry    `json:",omitempty"`
+	SignerEntries []SignerEntries  `json:",omitempty"`
 	SignerListID  *uint32          `json:",omitempty"`
 }
 
@@ -155,6 +169,15 @@ type PayChannel struct {
 	SourceTag      *uint32          `json:",omitempty"`
 }
 
+type Check struct {
+	leBase
+	Account     *Account `json:",omitempty"`
+	Destination *Account `json:",omitempty"`
+	Expiration  *uint32  `json:",omitempty"`
+	SendMax     *Amount  `json:",omitempty"`
+	Sequence    *uint32  `json:",omitempty"`
+}
+
 func (a *AccountRoot) Affects(account Account) bool {
 	return a.Account != nil && a.Account.Equals(account)
 }
@@ -171,7 +194,7 @@ func (s *Escrow) Affects(account Account) bool {
 }
 func (s *SignerList) Affects(account Account) bool {
 	for _, entry := range s.SignerEntries {
-		if entry.Account != nil && entry.Account.Equals(account) {
+		if entry.SignerEntry.Account != nil && entry.SignerEntry.Account.Equals(account) {
 			return true
 		}
 	}
@@ -179,6 +202,9 @@ func (s *SignerList) Affects(account Account) bool {
 }
 func (t *Ticket) Affects(account Account) bool { return t.Account != nil && t.Account.Equals(account) }
 func (p *PayChannel) Affects(account Account) bool {
+	return (p.Account != nil && p.Account.Equals(account)) || (p.Destination != nil && p.Destination.Equals(account))
+}
+func (p *Check) Affects(account Account) bool {
 	return (p.Account != nil && p.Account.Equals(account)) || (p.Destination != nil && p.Destination.Equals(account))
 }
 

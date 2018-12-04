@@ -10,6 +10,7 @@ type TxBase struct {
 	AccountTxnID       *Hash256        `json:",omitempty"`
 	SigningPubKey      *PublicKey      `json:",omitempty"`
 	TxnSignature       *VariableLength `json:",omitempty"`
+	Signers            Signers         `json:",omitempty"`
 	Memos              Memos           `json:",omitempty"`
 	PreviousTxnID      *Hash256        `json:",omitempty"`
 	LastLedgerSequence *uint32         `json:",omitempty"`
@@ -130,6 +131,33 @@ type PaymentChannelClaim struct {
 	PublicKey *PublicKey      `json:",omitempty"`
 }
 
+// CheckCreate, CheckCash, CheckCancel enabled by amendment 157D2D480E006395B76F948E3E07A45A05FE10230D88A7993C71F97AE4B1F2D1
+
+// https://ripple.com/build/transactions/#checkcreate
+type CheckCreate struct {
+	TxBase
+	Destination    Account
+	SendMax        Amount
+	DestinationTag *uint32  `json:",omitempty"`
+	Expiration     *uint32  `json:",omitempty"`
+	InvoiceID      *Hash256 `json:",omitempty"`
+}
+
+// https://ripple.com/build/transactions/#checkcash
+// Must include one of Amount or DeliverMin
+type CheckCash struct {
+	TxBase
+	CheckID    Hash256
+	Amount     *Amount `json:",omitempty"`
+	DeliverMin *Amount `json:",omitempty"`
+}
+
+// https://ripple.com/build/transactions/#checkcancel
+type CheckCancel struct {
+	TxBase
+	CheckID Hash256
+}
+
 type TicketCreate struct {
 	Target     *Account `json:",omitempty"`
 	Expiration *uint32  `json:",omitempty"`
@@ -141,8 +169,8 @@ type TicketCancel struct {
 
 type SignerListSet struct {
 	TxBase
-	SignerQuorum  uint32        `json:",omitempty"`
-	SignerEntries []SignerEntry `json:",omitempty"`
+	SignerQuorum  uint32          `json:",omitempty"`
+	SignerEntries []SignerEntries `json:",omitempty"`
 }
 
 func (t *TxBase) GetBase() *TxBase                    { return t }
@@ -151,7 +179,7 @@ func (t *TxBase) GetTransactionType() TransactionType { return t.TransactionType
 func (t *TxBase) Prefix() HashPrefix                  { return HP_TRANSACTION_ID }
 func (t *TxBase) GetPublicKey() *PublicKey            { return t.SigningPubKey }
 func (t *TxBase) GetSignature() *VariableLength       { return t.TxnSignature }
-func (t *TxBase) SigningPrefix() HashPrefix           { return HP_TRANSACTION_SIGN }
+func (t *TxBase) SigningPrefix() HashPrefix           { return t.signingPrefix() }
 func (t *TxBase) PathSet() PathSet                    { return PathSet(nil) }
 func (t *TxBase) GetHash() *Hash256                   { return &t.Hash }
 
@@ -173,13 +201,37 @@ func (t *TxBase) Compare(other *TxBase) int {
 	}
 }
 
+func (t *TxBase) AddSignature(signer *Signer) {
+	t.Signers = append(t.Signers, *signer)
+}
+
+func (t *TxBase) signingPrefix() HashPrefix {
+	if t.Signers == nil {
+		return HP_TRANSACTION_SIGN
+	}
+	return HP_TRANSACTION_MULTISIGN
+}
+
 func (t *TxBase) InitialiseForSigning() {
-	if t.SigningPubKey == nil {
+	if t.Signers == nil {
+		if t.SigningPubKey == nil {
+			t.SigningPubKey = new(PublicKey)
+		}
+		if t.TxnSignature == nil {
+			t.TxnSignature = new(VariableLength)
+		}
+	} else {
 		t.SigningPubKey = new(PublicKey)
+		t.TxnSignature = nil
 	}
-	if t.TxnSignature == nil {
-		t.TxnSignature = new(VariableLength)
+}
+
+func (t *TxBase) InitialiseForMultiSigning() {
+	if t.Signers == nil {
+		t.Signers = Signers{}
 	}
+	t.SigningPubKey = new(PublicKey)
+	t.TxnSignature = nil
 }
 
 func (o *OfferCreate) Ratio() *Value {
