@@ -76,12 +76,12 @@ type AccountTxResult struct {
 	Transactions data.TransactionSlice  `json:"transactions,omitempty"`
 }
 
-func newAccountTxCommand(account data.Account, pageSize int, marker map[string]interface{}) *AccountTxCommand {
+func newAccountTxCommand(account data.Account, pageSize int, marker map[string]interface{}, minLedger, maxLedger int64) *AccountTxCommand {
 	return &AccountTxCommand{
 		Command:   newCommand("account_tx"),
 		Account:   account,
-		MinLedger: -1,
-		MaxLedger: -1,
+		MinLedger: minLedger,
+		MaxLedger: maxLedger,
 		Limit:     pageSize,
 		Marker:    marker,
 	}
@@ -295,7 +295,7 @@ type FeeResult struct {
 	CurrentQueueSize  uint32 `json:"current_queue_size,string"`
 	Drops             struct {
 		BaseFee       data.Value `json:"base_fee"`
-		MedianFee     data.Value `json:"base_fee"`
+		MedianFee     data.Value `json:"median_fee"`
 		MinimumFee    data.Value `json:"minimum_fee"`
 		OpenLedgerFee data.Value `json:"open_ledger_fee"`
 	} `json:"drops"`

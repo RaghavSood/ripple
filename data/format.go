@@ -14,14 +14,15 @@ type LedgerNamespace uint16
 
 const (
 	// Hash Prefixes
-	HP_TRANSACTION_ID   HashPrefix = 0x54584E00 // 'TXN' transaction
-	HP_TRANSACTION_NODE HashPrefix = 0x534E4400 // 'SND' transaction plus metadata (probably should have been TND!)
-	HP_LEAF_NODE        HashPrefix = 0x4D4C4E00 // 'MLN' account state
-	HP_INNER_NODE       HashPrefix = 0x4D494E00 // 'MIN' inner node in tree
-	HP_LEDGER_MASTER    HashPrefix = 0x4C575200 // 'LWR' ledger master data for signing (probably should have been LGR!)
-	HP_TRANSACTION_SIGN HashPrefix = 0x53545800 // 'STX' inner transaction to sign
-	HP_VALIDATION       HashPrefix = 0x56414C00 // 'VAL' validation for signing
-	HP_PROPOSAL         HashPrefix = 0x50525000 // 'PRP' proposal for signing
+	HP_TRANSACTION_ID        HashPrefix = 0x54584E00 // 'TXN' transaction
+	HP_TRANSACTION_NODE      HashPrefix = 0x534E4400 // 'SND' transaction plus metadata (probably should have been TND!)
+	HP_LEAF_NODE             HashPrefix = 0x4D4C4E00 // 'MLN' account state
+	HP_INNER_NODE            HashPrefix = 0x4D494E00 // 'MIN' inner node in tree
+	HP_LEDGER_MASTER         HashPrefix = 0x4C575200 // 'LWR' ledger master data for signing (probably should have been LGR!)
+	HP_TRANSACTION_SIGN      HashPrefix = 0x53545800 // 'STX' inner transaction to sign
+	HP_TRANSACTION_MULTISIGN HashPrefix = 0x534D5400 // 'SMT' inner transaction to multi_sign
+	HP_VALIDATION            HashPrefix = 0x56414C00 // 'VAL' validation for signing
+	HP_PROPOSAL              HashPrefix = 0x50525000 // 'PRP' proposal for signing
 
 	// Node Types
 	NT_UNKNOWN          NodeType = 0
@@ -86,6 +87,7 @@ const (
 	ST_VECTOR256 uint8 = 19
 )
 
+// See rippled's SField.cpp for the strings and corresponding encoding values.
 var encodings = map[enc]string{
 	// 16-bit unsigned integers (common)
 	enc{ST_UINT16, 1}: "LedgerEntryType",
@@ -159,6 +161,7 @@ var encodings = map[enc]string{
 	enc{ST_HASH256, 20}: "TicketID",
 	enc{ST_HASH256, 21}: "Digest",
 	enc{ST_HASH256, 22}: "Channel",
+	enc{ST_HASH256, 24}: "CheckID",
 	// currency amount (common)
 	enc{ST_AMOUNT, 1}:  "Amount",
 	enc{ST_AMOUNT, 2}:  "Balance",
@@ -254,7 +257,7 @@ func init() {
 	signingFields = make(map[enc]struct{})
 	for e, name := range encodings {
 		reverseEncodings[name] = e
-		if strings.Contains(name, "Signature") {
+		if strings.Contains(name, "Signature") || strings.EqualFold(name, "Signers") {
 			signingFields[e] = struct{}{}
 		}
 	}

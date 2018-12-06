@@ -11,16 +11,16 @@ import (
 )
 
 func Raw(h Hashable) (Hash256, []byte, error) {
-	return raw(h, h.Prefix(), false)
+	return raw(h, h.Prefix(), nil, false)
 }
 
 func NodeId(h Hashable) (Hash256, error) {
-	nodeid, _, err := raw(h, h.Prefix(), false)
+	nodeid, _, err := raw(h, h.Prefix(), nil, false)
 	return nodeid, err
 }
 
-func SigningHash(s Signer) (Hash256, []byte, error) {
-	return raw(s, s.SigningPrefix(), true)
+func SigningHash(s SignerAgent, signingSuffix []byte) (Hash256, []byte, error) {
+	return raw(s, s.SigningPrefix(), signingSuffix, true)
 }
 
 func Node(h Storer) (Hash256, []byte, error) {
@@ -30,14 +30,14 @@ func Node(h Storer) (Hash256, []byte, error) {
 			return zero256, nil, err
 		}
 	}
-	key, value, err := raw(h, h.Prefix(), true)
+	key, value, err := raw(h, h.Prefix(), nil, true)
 	if err != nil {
 		return zero256, nil, err
 	}
 	return key, append(header.Bytes(), value...), nil
 }
 
-func raw(value interface{}, prefix HashPrefix, ignoreSigningFields bool) (Hash256, []byte, error) {
+func raw(value interface{}, prefix HashPrefix, suffix []byte, ignoreSigningFields bool) (Hash256, []byte, error) {
 	buf := new(bytes.Buffer)
 	hasher := sha512.New()
 	multi := io.MultiWriter(buf, hasher)
@@ -45,6 +45,9 @@ func raw(value interface{}, prefix HashPrefix, ignoreSigningFields bool) (Hash25
 		return zero256, nil, err
 	}
 	if err := writeRaw(multi, value, ignoreSigningFields); err != nil {
+		return zero256, nil, err
+	}
+	if err := write(multi, suffix); err != nil {
 		return zero256, nil, err
 	}
 	var hash Hash256
@@ -104,9 +107,6 @@ func encode(w io.Writer, value interface{}, ignoreSigningFields bool) error {
 	fields := getFields(&v, 0)
 	// fmt.Println(fields.String())
 	return fields.Each(func(e enc, v interface{}) error {
-		if ignoreSigningFields && e.SigningField() {
-			return nil
-		}
 		if err := writeEncoding(w, e); err != nil {
 			return err
 		}
@@ -120,7 +120,7 @@ func encode(w io.Writer, value interface{}, ignoreSigningFields bool) error {
 			err = write(w, v2)
 		}
 		return err
-	})
+	}, ignoreSigningFields)
 }
 
 type field struct {
@@ -192,12 +192,15 @@ func getFields(v *reflect.Value, depth int) fieldSlice {
 	return fields
 }
 
-func (s fieldSlice) Each(f func(e enc, v interface{}) error) error {
+func (s fieldSlice) Each(f func(e enc, v interface{}) error, ignoreSigningFields bool) error {
 	for _, field := range s {
+		if ignoreSigningFields && field.encoding.SigningField() {
+			continue
+		}
 		if err := f(field.encoding, field.value); err != nil {
 			return err
 		}
-		if err := field.children.Each(f); err != nil {
+		if err := field.children.Each(f, ignoreSigningFields); err != nil {
 			return err
 		}
 	}
@@ -209,6 +212,6 @@ func (f fieldSlice) String() string {
 	f.Each(func(e enc, v interface{}) error {
 		s = append(s, fmt.Sprintf("%s:%d:%d:%v", encodings[e], e.typ, e.field, v))
 		return nil
-	})
+	}, false)
 	return strings.Join(s, "\n")
 }

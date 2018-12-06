@@ -274,6 +274,13 @@ func readObject(r Reader, v *reflect.Value) error {
 				err := readObject(r, &s)
 				v.Set(s.Elem())
 				return err
+			case "Signer":
+				var signer Signer
+				s := reflect.ValueOf(&signer)
+				inner := reflect.ValueOf(&signer.Signer)
+				err := readObject(r, &inner)
+				v.Set(s.Elem())
+				return err
 			case "Majority":
 				var majority Majority
 				m := reflect.ValueOf(&majority)
